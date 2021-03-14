@@ -1,17 +1,17 @@
 package switchHosts.frame;
 
-import switchHosts.Utils;
 import switchHosts.frame.listener.ListenerService;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
 
 public class MainFrame extends JFrame {
 
-    static final URL addIcon = MainFrame.class.getResource("resource/icons/add.png");
+    private JButton addBtn, deleteBtn, applyBtn = new JButton();
 
-    private final JPanel textPanel = new JPanel();
+    private JList<String> listPanel = new JList<>();
+
+    private String[] hostsName;
 
     private ListenerService listenerService;
 
@@ -20,7 +20,7 @@ public class MainFrame extends JFrame {
      */
     public MainFrame() {
         super("switch hosts");
-        setSize(1300, 780);
+        setSize(1000, 780);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -36,93 +36,86 @@ public class MainFrame extends JFrame {
         menuBar.add(menu);
         this.setJMenuBar(menuBar);
 
-        // 先创建右边的panel，显示出文本域
-        //createTextPanel();
-
         // 创建左边的panel，显示按钮和列表
         createLeftPanel();
 
+        // 创建右边的panel，显示出文本域
+        createRightPanel();
+
         // 显示frame
-        this.setVisible(true);
+        setVisible(true);
     }
 
     /***
-     * 左边的panel
+     * 添加、删除、应用按钮和hosts列表
      */
     private void createLeftPanel() {
         JPanel leftPanel = new JPanel();
         leftPanel.setPreferredSize(new Dimension(280, this.getHeight()));
 
         // 按钮
-        JPanel leftUpPanel = new JPanel();
-        leftUpPanel.setPreferredSize(new Dimension(280, 35));
-        JButton addBtn = new JButton("添加");
-        addBtn.setIcon(new ImageIcon(addIcon));
-        leftUpPanel.add(addBtn);
-        leftUpPanel.add(new JButton("删除"));
-
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setPreferredSize(new Dimension(280, 35));
+        buttonPanel.add(addBtn = new JButton("添加"));
+        buttonPanel.add(deleteBtn = new JButton("删除"));
+        buttonPanel.add(applyBtn = new JButton("应用"));
 
         // 文件列表
-        JPanel leftDownPanel = new JPanel();
-        leftDownPanel.setPreferredSize(new Dimension(200, this.getHeight() - 100));
-        leftDownPanel.setLayout(new BorderLayout());
-        createFieldList(leftDownPanel);
+        hostsName = new String[]{"hosts1", "hosts2", "hosts3", "hosts4"};
+        listPanel = new JList<>(hostsName);
+        listPanel.setBorder(BorderFactory.createTitledBorder("HOSTS 列表"));
 
-        leftPanel.add(leftUpPanel, BorderLayout.NORTH);
-        leftPanel.add(leftDownPanel, BorderLayout.SOUTH);
+        JScrollPane jScrollPane = new JScrollPane();
+        jScrollPane.setPreferredSize(new Dimension(200, this.getHeight() - 100));
+        jScrollPane.setViewportView(listPanel);
+
+        leftPanel.add(buttonPanel, BorderLayout.NORTH);
+        leftPanel.add(jScrollPane, BorderLayout.SOUTH);
         add(leftPanel, BorderLayout.WEST);
+
+        // 添加面板事件
+        addActionEvent();
     }
 
     /**
-     * 创建文件列表panel
-     *
-     * @param panel panel
+     * hosts名称和文本域
      */
-    private void createFieldList(JPanel panel) {
-        JScrollPane scrollPane = new JScrollPane();
-        JTabbedPane table = new JTabbedPane();
-        table.addTab("hosts1", textPanel);
-        scrollPane.add(table);
-        panel.add(scrollPane);
-    }
-
-    /**
-     * text panel
-     */
-    private void createTextPanel() {
+    private void createRightPanel() {
         JPanel rightPanel = new JPanel();
-        rightPanel.setPreferredSize(new Dimension(280, 30));
+        rightPanel.setPreferredSize(new Dimension(280, this.getHeight()));
         rightPanel.setLayout(new BorderLayout());
 
-        // 右上名称
-        JPanel rightUpPanel = new JPanel();
-        rightUpPanel.add(new JLabel("Hosts名称:"));
+        // 名称和保存按钮
+        JPanel namePanel = new JPanel();
         JTextField nmeTextField = new JTextField(20);
-        nmeTextField.setBorder(BorderFactory.createLineBorder(Color.gray, 2));
-
-        rightUpPanel.add(new JButton("保存并应用"));
-
-        rightUpPanel.add(nmeTextField);
+        nmeTextField.setBorder(BorderFactory.createTitledBorder("名称"));
+        namePanel.add(nmeTextField);
 
         JScrollPane scrollPane = new JScrollPane();
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         TextArea textArea = new TextArea(30, 50);
         scrollPane.setViewportView(textArea);
-        //sizeWindowOnScreen(panel, 0.6, 0.6);
 
-        rightPanel.add(rightUpPanel, BorderLayout.NORTH);
-        rightPanel.add(scrollPane, BorderLayout.SOUTH);
-        add(rightPanel, BorderLayout.EAST);
+        rightPanel.add(namePanel, BorderLayout.NORTH);
+        rightPanel.add(scrollPane, BorderLayout.CENTER);
+        add(rightPanel, BorderLayout.CENTER);
     }
 
     /**
-     * @param txtPanel   panel
-     * @param widthRate  宽度比例
-     * @param heightRate 高度比例
+     * 添加事件
      */
-    private void sizeWindowOnScreen(JPanel txtPanel, double widthRate, double heightRate) {
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        txtPanel.setSize(new Dimension((int) (screenSize.width * widthRate), (int) (screenSize.height * heightRate)));
+    private void addActionEvent() {
+        // 添加按钮
+        addBtn.addActionListener(actionEvent -> listenerService.clickAddBtn());
+
+        // 删除按钮
+        deleteBtn.addActionListener(actionEvent -> listenerService.clickDeleteBtn());
+
+        // 应用按钮
+        applyBtn.addActionListener(actionEvent -> listenerService.clickApplyBtn());
+
+        // 列表选择事件
+        listPanel.addListSelectionListener(listSelectionEvent -> listenerService.selectList());
+
     }
+
 }
