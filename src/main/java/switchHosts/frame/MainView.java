@@ -212,6 +212,7 @@ public class MainView extends JFrame {
 
                 // 新文件覆盖当前文件,用于保存
                 file = newFile;
+                originalNme = nameText;
             } else {
                 new showMessageFrame("文件重命名失败");
             }
@@ -232,7 +233,16 @@ public class MainView extends JFrame {
      * 点击应用按钮
      */
     private void clickApplyBtn() {
+        String winHosts = "C:/Windows/System32/drivers/etc/hosts";
+        File hostsFile = new File(winHosts);
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(hostsFile))) {
+            String textAreaText = textArea.getText();
+            bw.write(textAreaText);
 
+            new showMessageFrame("应用成功");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
