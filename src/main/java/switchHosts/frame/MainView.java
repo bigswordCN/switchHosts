@@ -3,8 +3,10 @@ package switchHosts.frame;
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Objects;
@@ -13,7 +15,7 @@ import java.util.Vector;
 
 public class MainView extends JFrame {
 
-    private JButton addBtn, deleteBtn, applyBtn = new JButton();
+    private JButton addBtn, deleteBtn, saveBtn, applyBtn = new JButton();
 
     private JList<String> listPanel = new JList<>();
 
@@ -24,6 +26,8 @@ public class MainView extends JFrame {
     private final String localDir = System.getProperty("user.home") + "/.switchHosts";
 
     private String originalNme = "";
+
+    private int selectIndex = 0;
 
     /**
      * 创建主面板
@@ -54,23 +58,25 @@ public class MainView extends JFrame {
 
         // 读取hosts文件
         processLocalFile();
+        listPanel.setSelectedIndex(0);
 
         // 显示frame
         setVisible(true);
     }
 
     /***
-     * 添加、删除、应用按钮和hosts列表
+     * 添加、删除、保存、应用按钮和hosts列表
      */
     private void createLeftPanel() {
         JPanel leftPanel = new JPanel();
-        leftPanel.setPreferredSize(new Dimension(280, this.getHeight()));
+        leftPanel.setPreferredSize(new Dimension(320, this.getHeight()));
 
         // 按钮
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setPreferredSize(new Dimension(280, 35));
+        buttonPanel.setPreferredSize(new Dimension(320, 35));
         buttonPanel.add(addBtn = new JButton("添加"));
         buttonPanel.add(deleteBtn = new JButton("删除"));
+        buttonPanel.add(saveBtn = new JButton("保存"));
         buttonPanel.add(applyBtn = new JButton("应用"));
 
         // 文件列表
@@ -78,7 +84,7 @@ public class MainView extends JFrame {
         listPanel.setBorder(BorderFactory.createTitledBorder("HOSTS 列表"));
 
         JScrollPane jScrollPane = new JScrollPane();
-        jScrollPane.setPreferredSize(new Dimension(200, this.getHeight() - 100));
+        jScrollPane.setPreferredSize(new Dimension(280, this.getHeight() - 100));
         jScrollPane.setViewportView(listPanel);
 
         leftPanel.add(buttonPanel, BorderLayout.NORTH);
@@ -122,6 +128,9 @@ public class MainView extends JFrame {
         // 删除按钮
         deleteBtn.addActionListener(actionEvent -> clickDeleteBtn());
 
+        // 保存按钮
+        saveBtn.addActionListener(actionEvent -> clickSaveBtn());
+
         // 应用按钮
         applyBtn.addActionListener(actionEvent -> clickApplyBtn());
 
@@ -135,12 +144,15 @@ public class MainView extends JFrame {
     private void selectList() {
         // 获取当前hosts文件名称
         originalNme = listPanel.getSelectedValue();
+        selectIndex = listPanel.getSelectedIndex();
+
+        // 读取选择内容
         if (null != originalNme && !originalNme.isEmpty()) {
-            nmeTextField.setText(originalNme.substring(0, originalNme.length() - 4));
+            nmeTextField.setText(originalNme);
 
             // 读取hosts文件内容
             StringBuilder stringBuffer = new StringBuilder();
-            File file = new File(localDir + "/" + originalNme);
+            File file = new File(localDir + File.separator + originalNme);
             try (FileReader fileReader = new FileReader(file); BufferedReader bufferedReader = new BufferedReader(fileReader)) {
                 while (bufferedReader.ready()) {
                     stringBuffer.append(bufferedReader.readLine());
@@ -156,45 +168,71 @@ public class MainView extends JFrame {
     }
 
     /**
-     * 点击保存并应用按钮
-     */
-    private void clickApplyBtn() {
-        String hostsNme = nmeTextField.getText();
-        // 文件名不相等时先删除
-        if (!originalNme.substring(0, originalNme.length() - 4).equals(hostsNme)) {
-            //删除旧文件
-            clickDeleteBtn();
-        }
-
-        // 保存新文件
-        try {
-            File file = new File(localDir + "/" + hostsNme + ".txt");
-
-            if (!file.createNewFile()) {
-                System.out.println("createNewFile error");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void clickDeleteBtn() {
-        if (null != listPanel.getSelectedValue()) {
-            String fileName = listPanel.getSelectedValue();
-            if (!new File(localDir + "/" + fileName).delete()) {
-                System.out.println("delete error");
-            }
-            // 重新读取hosts文件
-            refreshHostsList();
-        }
-    }
-
-    /**
      * 点击添加按钮,添加一个新的hosts文件
      */
     private void clickAddBtn() {
         createHost();
         refreshHostsList();
+    }
+
+    private void clickDeleteBtn() {
+        if (null != listPanel.getSelectedValue()) {
+            //返回按钮index,点击yes时i=0点击否时=1
+            int n = JOptionPane.showConfirmDialog(null, "确认删除" + listPanel.getSelectedValue() + "吗?",
+                    "", JOptionPane.YES_NO_OPTION);
+
+            if (n == 0) {
+                String fileName = listPanel.getSelectedValue();
+                if (!new File(localDir + File.separator + fileName).delete()) {
+                    System.out.println("delete error");
+                }
+                // 重新读取hosts文件
+                refreshHostsList();
+            } else {
+                new showMessageFrame("取消删除");
+            }
+        }
+    }
+
+    /**
+     * 点击保存并应用按钮
+     */
+    private void clickSaveBtn() {
+        String nameText = nmeTextField.getText();
+        // 当前文件名
+        File file = new File(localDir + File.separator + originalNme);
+        // 文件名不相等时重命名文件
+        if (!originalNme.equals(nameText)) {
+            String parent = file.getParent();
+            File newFile = new File(parent + File.separator + nameText);
+            if (file.renameTo(newFile)) {
+                // 读取hosts文件
+                refreshHostsList();
+                listPanel.setSelectedIndex(selectIndex);
+
+                // 新文件覆盖当前文件,用于保存
+                file = newFile;
+            } else {
+                new showMessageFrame("文件重命名失败");
+            }
+        }
+
+        // 保存新文件
+        if (null != textArea.getText()) {
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
+                String textAreaText = textArea.getText();
+                bw.write(textAreaText);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 点击应用按钮
+     */
+    private void clickApplyBtn() {
+
     }
 
     /**
@@ -245,12 +283,12 @@ public class MainView extends JFrame {
     }
 
     /**
-     * 创建一个新的txt文件
+     * 创建一个新的hosts文件
      */
     private void createHost() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
         String txtName = sdf.format(System.currentTimeMillis());
-        String path = localDir + "/" + txtName + UUID.randomUUID().toString().substring(0, 4) + ".txt";
+        String path = localDir + "/" + txtName + UUID.randomUUID().toString().substring(0, 4);
 
         try {
             File file = new File(path);
