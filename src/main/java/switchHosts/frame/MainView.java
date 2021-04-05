@@ -2,12 +2,8 @@ package switchHosts.frame;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.awt.event.*;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Objects;
 import java.util.UUID;
@@ -29,12 +25,18 @@ public class MainView extends JFrame {
 
     private int selectIndex = 0;
 
+    // 系统类型：x64
+    //private String osArch = System.getProperty("os.arch");
+
+    // osName
+    private final String osName = System.getProperty("os.name");
+
     /**
      * 创建主面板
      */
     public MainView() {
         super("SWITCH HOSTS");
-        setSize(1000, 780);
+        setSize(1000, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -43,12 +45,19 @@ public class MainView extends JFrame {
         // 菜单面板
         JMenuBar menuBar = new JMenuBar();
         JMenu menu = new JMenu("帮助");
-        JMenuItem item1 = new JMenuItem("使用说明");
-        JMenuItem item2 = new JMenuItem("关于");
-        menu.add(item1);
-        menu.add(item2);
+        JMenuItem itemInfo = new JMenuItem("使用说明");
+        JMenuItem itemAbout = new JMenuItem("关于");
+        JMenuItem itemExit = new JMenuItem("退出");
+        menu.add(itemInfo);
+        menu.add(itemAbout);
+        menu.addSeparator();
+        menu.add(itemExit);
+
+        // 添加菜单栏
         menuBar.add(menu);
         setJMenuBar(menuBar);
+        // 菜单栏事件
+        //addMenuItemEvent(menu);
 
         // 创建左边的panel，显示按钮和列表
         createLeftPanel();
@@ -62,6 +71,17 @@ public class MainView extends JFrame {
 
         // 显示frame
         setVisible(true);
+    }
+
+
+    private void addMenuItemEvent(JMenu jMenu) {
+       jMenu.addItemListener(new ItemListener() {
+           @Override
+           public void itemStateChanged(ItemEvent e) {
+               System.out.println(e.getItem());
+               System.out.println(e.getSource());
+           }
+       });
     }
 
     /***
@@ -171,6 +191,10 @@ public class MainView extends JFrame {
      * 点击添加按钮,添加一个新的hosts文件
      */
     private void clickAddBtn() {
+        // 点击添加按钮时清空文本域
+        textArea.setText("");
+
+        // 新建一个新的hosts
         createHost();
         refreshHostsList();
     }
@@ -179,7 +203,7 @@ public class MainView extends JFrame {
         if (null != listPanel.getSelectedValue()) {
             //返回按钮index,点击yes时i=0点击否时=1
             int n = JOptionPane.showConfirmDialog(null, "确认删除" + listPanel.getSelectedValue() + "吗?",
-                    "", JOptionPane.YES_NO_OPTION);
+                    "确认删除", JOptionPane.YES_NO_OPTION);
 
             if (n == 0) {
                 String fileName = listPanel.getSelectedValue();
@@ -233,15 +257,21 @@ public class MainView extends JFrame {
      * 点击应用按钮
      */
     private void clickApplyBtn() {
-        String winHosts = "C:/Windows/System32/drivers/etc/hosts";
-        File hostsFile = new File(winHosts);
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(hostsFile))) {
-            String textAreaText = textArea.getText();
-            bw.write(textAreaText);
+        // 应用前先保存
+        clickSaveBtn();
 
-            new showMessageFrame("应用成功");
-        } catch (IOException e) {
-            e.printStackTrace();
+        // Windows系统
+        if (osName.contains("Windows")) {
+            String winHosts = "C:/Windows/System32/drivers/etc/hosts";
+            File hostsFile = new File(winHosts);
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(hostsFile))) {
+                String textAreaText = textArea.getText();
+                bw.write(textAreaText);
+
+                new showMessageFrame("应用成功");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -249,9 +279,6 @@ public class MainView extends JFrame {
      * 读取本地hosts文件
      */
     private void processLocalFile() {
-        //String osArch = System.getProperty("os.arch");
-        //String osName = System.getProperty("os.name");
-
         // 在user目录下创建.switchHosts目录用于存放hosts文件
         try {
             File localFile = new File(localDir);

@@ -23,7 +23,7 @@ public class showMessageFrame extends JFrame {
             text.setBackground(new java.awt.Color(255, 251, 240));
 
             pack();
-            setBounds(1200, 500, 160, 50);
+            setBounds(500, 300, 160, 50);
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e1) {
