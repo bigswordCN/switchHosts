@@ -2,8 +2,13 @@ package switchHosts.frame;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
+import java.awt.event.ActionEvent;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Objects;
 import java.util.UUID;
@@ -31,6 +36,10 @@ public class MainView extends JFrame {
     // osName
     private final String osName = System.getProperty("os.name");
 
+    private final JMenuItem itemInfo;
+    private final JMenuItem itemAbout;
+    private final JMenuItem itemExit;
+
     /**
      * 创建主面板
      */
@@ -45,9 +54,9 @@ public class MainView extends JFrame {
         // 菜单面板
         JMenuBar menuBar = new JMenuBar();
         JMenu menu = new JMenu("帮助");
-        JMenuItem itemInfo = new JMenuItem("使用说明");
-        JMenuItem itemAbout = new JMenuItem("关于");
-        JMenuItem itemExit = new JMenuItem("退出");
+        itemInfo = new JMenuItem("使用说明");
+        itemAbout = new JMenuItem("关于");
+        itemExit = new JMenuItem("退出");
         menu.add(itemInfo);
         menu.add(itemAbout);
         menu.addSeparator();
@@ -57,7 +66,7 @@ public class MainView extends JFrame {
         menuBar.add(menu);
         setJMenuBar(menuBar);
         // 菜单栏事件
-        //addMenuItemEvent(menu);
+        addMenuItemEvent();
 
         // 创建左边的panel，显示按钮和列表
         createLeftPanel();
@@ -74,14 +83,49 @@ public class MainView extends JFrame {
     }
 
 
-    private void addMenuItemEvent(JMenu jMenu) {
-       jMenu.addItemListener(new ItemListener() {
-           @Override
-           public void itemStateChanged(ItemEvent e) {
-               System.out.println(e.getItem());
-               System.out.println(e.getSource());
-           }
-       });
+    private void addMenuItemEvent() {
+        itemInfo.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                showMessageDialog("info");
+            }
+        });
+
+        itemAbout.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                showMessageDialog("about");
+            }
+        });
+
+        itemExit.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                showMessageDialog("exit");
+            }
+        });
+    }
+
+    // 直接替换etc目录下hosts中的内容
+    // 使用前请先备份原hosts点击应用按钮生效
+    protected void showMessageDialog(String type) {
+        // 使用说明
+        if ("info".equals(type)) {
+            JOptionPane.showMessageDialog(this, "!!!注意：使用前请先备份原hosts!!!\n" +
+                            "文件存放在%HOME%\\.switchHosts目录\n点击应用按钮生效",
+                    "使用说明", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        // 关于
+        if ("about".equals(type)) {
+            JOptionPane.showMessageDialog(this, "Windows系统切换hosts的小工具", "关于",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        // 退出
+        if ("exit".equals(type)) {
+            System.exit(0);
+        }
     }
 
     /***
@@ -212,8 +256,6 @@ public class MainView extends JFrame {
                 }
                 // 重新读取hosts文件
                 refreshHostsList();
-            } else {
-                new showMessageFrame("取消删除");
             }
         }
     }
@@ -237,8 +279,6 @@ public class MainView extends JFrame {
                 // 新文件覆盖当前文件,用于保存
                 file = newFile;
                 originalNme = nameText;
-            } else {
-                new showMessageFrame("文件重命名失败");
             }
         }
 
@@ -268,7 +308,7 @@ public class MainView extends JFrame {
                 String textAreaText = textArea.getText();
                 bw.write(textAreaText);
 
-                new showMessageFrame("应用成功");
+                JOptionPane.showMessageDialog(this, "应用成功");
             } catch (IOException e) {
                 e.printStackTrace();
             }
