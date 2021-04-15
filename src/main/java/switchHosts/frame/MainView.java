@@ -45,7 +45,7 @@ public class MainView extends JFrame {
      */
     public MainView() {
         super("SWITCH HOSTS");
-        setSize(1000, 700);
+        setSize(1000, 750);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -133,7 +133,7 @@ public class MainView extends JFrame {
      */
     private void createLeftPanel() {
         JPanel leftPanel = new JPanel();
-        leftPanel.setPreferredSize(new Dimension(320, this.getHeight()));
+        leftPanel.setPreferredSize(new Dimension(320, this.getHeight() - 10));
 
         // 按钮
         JPanel buttonPanel = new JPanel();
@@ -145,7 +145,7 @@ public class MainView extends JFrame {
 
         // 文件列表
         listPanel = new JList<>();
-        listPanel.setBorder(BorderFactory.createTitledBorder("HOSTS 列表"));
+        listPanel.setBorder(BorderFactory.createTitledBorder(""));
 
         JScrollPane jScrollPane = new JScrollPane();
         jScrollPane.setPreferredSize(new Dimension(280, this.getHeight() - 100));
@@ -310,7 +310,7 @@ public class MainView extends JFrame {
 
                 JOptionPane.showMessageDialog(this, "应用成功");
             } catch (IOException e) {
-                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "应用失败" + e.getMessage());
             }
         }
     }
