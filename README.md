@@ -1,2 +1,2 @@
 # switchhosts
-switchhosts-Java
+switchhosts-Java-swing
